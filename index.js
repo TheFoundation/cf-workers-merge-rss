@@ -62,9 +62,13 @@ function createHTML(items, sources,env) {
   let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
   
   for (let item of items) {
-    let shortdescription = striptags(item.content||item.description).substring(0, 666)
+    let shortdescription = striptags(item.content||item.description)
+    let endstring=""
+    if(shortdescription.length > 666 ) {
+      shortdescription=shortdescription.substring(0, 666) +  ' [<a href="'+item.link+'" >...</a>]'
+    }
     //console.log(shortdescription)
-    item.content =  shortdescription ?  shortdescription + ' [...]' : ''
+    item.content =  shortdescription ?  shortdescription  : ''
     item.formattedDate = item.pubDate
       ? dateFormatter.format(new Date(item.pubDate))
       : ''

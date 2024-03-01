@@ -2,7 +2,7 @@
 //import { Feed } from 'feed'
 import Handlebars from 'handlebars/runtime'
 import template from './templates/default.precompiled'
-//import * as striptags from 'striptags'
+import * as striptags from 'striptags'
 //
 ///**
 // * Extra Handlerbars template helpers

@@ -72,8 +72,8 @@ function createHTML(items, sources) {
   return template({
     items: items,
     sources: sources,
-    page_title: TITLE,
-    page_description: DESCRIPTION,
+    page_title: env.TITLE|| "MERGED FEED FOR "+env.FEEDS,
+    page_description: env.DESCRIPTION|| "No description provided",
   })
   //return "not implemented"
 }

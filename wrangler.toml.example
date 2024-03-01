@@ -17,4 +17,4 @@ CUSTOM_URL = "URL_TO_BE_DISPLAYED_ON_RSS_FEED"
 CACHE_MAX_AGE = "NUMBER_OF_SECONDS"
 
 [triggers]
-crons = ["0 */2 * * *"]
+crons = ["*/45 * * * *"]

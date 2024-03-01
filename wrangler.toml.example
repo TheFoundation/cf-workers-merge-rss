@@ -1,12 +1,11 @@
-name = "worker-planet"
-main = "./worker/script.js"
-compatibility_date = "2023-05-18"
-node_compat = true
-account_id = ""
+name = "merge-rss"
+main = "./index.js"
+compatibility_date = "2024-02-23"
+
 workers_dev = true
 
 kv_namespaces = [
-    { binding = "WORKER_PLANET_STORE", id = "", preview_id = "" }
+    { binding = "RSS_STORE", id = "", preview_id = "" }
 ]
 
 [vars]

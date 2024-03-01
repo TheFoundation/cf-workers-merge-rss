@@ -1,5 +1,7 @@
 # Worker-planet
 
+( fork fromp https://github.com/dethos/worker-planet/ , only  rss for now  )
+
 This project is meant to be an easy way to aggregate in a single page content from multiple sources.
 It takes a list of existing RSS feeds, aggregates their contents and displays them in chronological order.
 

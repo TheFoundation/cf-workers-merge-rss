@@ -1,83 +1,87 @@
-import Parser from 'rss-parser'
-import { Feed } from 'feed'
-import Handlebars from 'handlebars/runtime'
-import template from './templates/default.precompiled'
-import * as striptags from 'striptags'
-
-/**
- * Extra Handlerbars template helpers
- */
+//import Parser from 'rss-parser'
+//import { Feed } from 'feed'
+//import Handlebars from 'handlebars/runtime'
+//import template from './templates/default.precompiled'
+//import * as striptags from 'striptags'
+//
+///**
+// * Extra Handlerbars template helpers
+// */
 Handlebars.registerHelper('isRowElemN', function(index, rowItems, n, options) {
   return index % rowItems == n ? options.fn(this) : options.inverse(this)
 })
-
+//
+/*  */
+import { Feed } from 'feed'
+import { XMLParser } from 'fast-xml-parser';
 /**
- * Handle CRON jobs
- * Where information is gathered and HTML and RSS is generated.
+ * Builds a feed object from the provided items
+ * @param {Array} items parsed by rss-parser
+ * @return Feed object created by feed
  */
-addEventListener('scheduled', event => {
-  event.waitUntil(handleScheduled())
-})
+function createFeed(items,env) {
+  console.log(`[createFeed] start building the aggregated feed`)
+  const feed = new Feed({
+    title: env.TITLE|| "MERGED FEED FOR "+env.FEEDS,
+    description: env.DESCRIPTION|| "No description provided",
+    id:   env.CUSTOM_URL||env.FEEDS.split(",")[0],
+    link: env.CUSTOM_URL||env.FEEDS.split(",")[0],
+  })
 
-/**
- * Serve the existing generated elements.
- * CACHE is used to speed up the operation.
- */
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
-
-/**
- * Deliver aggregated content according to the formats requested
- * @param {Request} request
- * @returns Response
- */
-async function handleRequest(request) {
-  const cacheUrl = new URL(request.url)
-  const cacheKey = new Request(cacheUrl.toString(), request)
-  const cache = caches.default
-  const cacheMaxAge = CACHE_MAX_AGE || 3600
-  let response = await cache.match(cacheKey)
-  if (response) return response
-
-  const path = new URL(request.url).pathname
-
-  if (path === '/') {
-    let content = await WORKER_PLANET_STORE.get('html')
-    response = new Response(content, {
-      headers: {
-        'content-type': 'text/html;charset=UTF-8',
-        'Cache-Control': `max-age=${cacheMaxAge}`,
-      },
-    })
-  } else if (path === '/rss') {
-    let content = await WORKER_PLANET_STORE.get('rss')
-    response = new Response(content, {
-      headers: {
-        'content-type': 'application/rss+xml',
-        'Cache-Control': `max-age=${cacheMaxAge}`,
-      },
-    })
-  } else if (path === '/atom') {
-    let content = await WORKER_PLANET_STORE.get('atom')
-    response = new Response(content, {
-      headers: {
-        'content-type': 'application/atom+xml',
-        'Cache-Control': `max-age=${cacheMaxAge}`,
-      },
-    })
-  } else {
-    return new Response('', { status: 404 })
+  for (let item of items) {
+	let mydesc=item.description||""
+    feed.addItem({
+      title: item.title,
+      id: item.guid["#text"],
+      link: item.link,
+      description: mydesc,
+      content: item.content,
+      author: [
+        {
+          name: item.creator,
+          email: '',
+          link: item.source_link,
+        },
+      ],
+      contributor: [],
+      date: new Date(item.pubDate),
+		})
   }
-  await cache.put(cacheKey, response.clone())
-  return response
+  console.log(`[createFeed] Finished building the aggregated feed`)
+  return feed
+}
+/**
+ * Generate the HTML page with the aggregated contents
+ * @param {Array} items parsed by rss-parser
+ * @returns String with HTML page containing the parsed contents
+ */
+function createHTML(items, sources) {
+  //console.log(`[createHTML] building the HTML document`)
+  //let template = Handlebars.templates['default']
+  //let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
+  //
+  //for (let item of items) {
+  //  let shortdescription = striptags(item.content).substring(0, 250)
+  //  item.description = shortdescription ? shortdescription + ' [...]' : ''
+  //  item.formattedDate = item.pubDate
+  //    ? dateFormatter.format(new Date(item.pubDate))
+  //    : ''
+  //}
+  //
+  //return template({
+  //  items: items,
+  //  sources: sources,
+  //  page_title: TITLE,
+  //  page_description: DESCRIPTION,
+  //})
+  return "not implemented"
 }
 
 /**
  * Fetch all source feeds and generate the aggregated content
  */
-async function handleScheduled() {
-  let feeds = FEEDS.split(',')
+async function handleScheduled(env,ctx) {
+  let feeds = env.FEEDS.split(',')
   let content = []
   let sources = []
 
@@ -89,6 +93,7 @@ async function handleScheduled() {
 
   for (let [index, result] of results.entries()) {
     if (result.status == 'fulfilled') {
+		//console.log(result)
       let posts = result.value
       let title = posts[0].source_title
       let link = posts[0].source_link
@@ -114,19 +119,27 @@ async function handleScheduled() {
     }
   })
 
-  if (content.length > MAX_SIZE) {
-    content = content.slice(0, MAX_SIZE)
+  if (content.length > env.MAX_SIZE) {
+    content = content.slice(0, env.MAX_SIZE)
   }
 
   // Generate feed
-  let feed = createFeed(content)
+  let feed = createFeed(content,env)
   let html = createHTML(content, sources)
   // Store
-  await WORKER_PLANET_STORE.put('rss', feed.rss2())
-  await WORKER_PLANET_STORE.put('atom', feed.atom1())
-  await WORKER_PLANET_STORE.put('html', html)
+  console.log(feed.rss2())
+  
+  ctx.waitUntil(await env.RSS_STORE.put('rss', await feed.rss2()));
+
+  //await env.RSS_STORE.put('atom', feed.atom1())
+  ctx.waitUntil(await env.RSS_STORE.put('html', html));
+
+  
+  console.log("cron done")
 }
 
+
+	
 /**
  * Take a feed URL, fetch all items and attach source information
  * @param {String} feed The URL of the feed to be fetched and parsed
@@ -136,11 +149,17 @@ async function fetchAndHydrate(feed) {
   console.log(`[fetchAndHydrate] start to fetch feed: ${feed}`)
   let resp = await fetch(feed)
   console.log(`[fetchAndHydrate] response: ${resp.status}`)
-  let parser = new Parser()
+  //let parser = new Parser()
+  const options = {
+  	ignoreAttributes:false
+  }
+  const parser = new XMLParser(options);
   let content = await resp.text()
-  let contentFeed = await parser.parseString(content)
+  //let contentFeed = await parser.parseString(content)
+  let contentFeed = await parser.parse(content)
+  //console.log(JSON.stringify(contentFeed.rss.channel.item,null,2))
 
-  for (let item of contentFeed.items) {
+  for (let item of contentFeed.rss.channel.item) {
     item.source_title = contentFeed.title
     item.source_link = contentFeed.link
     if ('content:encoded' in item) {
@@ -148,68 +167,57 @@ async function fetchAndHydrate(feed) {
     }
   }
   console.log(
-    `[fetchAndHydrate] Finished fetch feed: ${feed}. ${contentFeed.items.length} items gathered`,
+    `[fetchAndHydrate] Finished fetch feed: ${feed}. ${contentFeed.rss.channel.item.length} items gathered`,
   )
-  return contentFeed.items
+  return contentFeed.rss.channel.item
 }
-
-/**
- * Builds a feed object from the provided items
- * @param {Array} items parsed by rss-parser
- * @return Feed object created by feed
- */
-function createFeed(items) {
-  console.log(`[createFeed] start building the aggregated feed`)
-  const feed = new Feed({
-    title: TITLE,
-    description: DESCRIPTION,
-    id: CUSTOM_URL,
-    link: CUSTOM_URL,
-  })
-
-  for (let item of items) {
-    feed.addItem({
-      title: item.title,
-      id: item.guid,
-      link: item.link,
-      description: item.contentSnippet,
-      content: item.content,
-      author: [
-        {
-          name: item.creator,
-          email: '',
-          link: item.source_link,
+export default {
+	// The scheduled handler is invoked at the interval set in our wrangler.toml's
+	// [[triggers]] configuration.
+  async fetch(request,env, ctx) {
+    const cacheUrl = new URL(request.url)
+    const cacheKey = new Request(cacheUrl.toString(), request)
+    const cache = caches.default
+    const cacheMaxAge = env.CACHE_MAX_AGE || 1800
+    let response = await cache.match(cacheKey)
+    if (response) return response
+    
+    const path = new URL(request.url).pathname
+    
+    if (path === '/') {
+      let content = await env.RSS_STORE.get('html')
+      response = new Response(content, {
+        headers: {
+          'content-type': 'text/html;charset=UTF-8',
+          'Cache-Control': `max-age=${cacheMaxAge}`,
         },
-      ],
-      contributor: [],
-      date: new Date(item.isoDate),
-    })
-  }
-  console.log(`[createFeed] Finished building the aggregated feed`)
-  return feed
-}
-/**
- * Generate the HTML page with the aggregated contents
- * @param {Array} items parsed by rss-parser
- * @returns String with HTML page containing the parsed contents
- */
-function createHTML(items, sources) {
-  console.log(`[createHTML] building the HTML document`)
-  let template = Handlebars.templates['default']
-  let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
+      })
+    } else if (path === '/rss') {
+      let content = await env.RSS_STORE.get('rss')
+      response = new Response(content, {
+        headers: {
+          'content-type': 'application/rss+xml',
+          'Cache-Control': `max-age=${cacheMaxAge}`,
+        },
+      })
+    } else if (path === '/atom') {
+      let content = await env.RSS_STORE.get('atom')
+      response = new Response(content, {
+        headers: {
+          'content-type': 'application/atom+xml',
+          'Cache-Control': `max-age=${cacheMaxAge}`,
+        },
+      })
+    } else {
+      return new Response('', { status: 404 })
+    }
+    	  		 ctx.waitUntil(    await cache.put(cacheKey, response.clone()));
 
-  for (let item of items) {
-    let shortdescription = striptags(item.content).substring(0, 250)
-    item.description = shortdescription ? shortdescription + ' [...]' : ''
-    item.formattedDate = item.pubDate
-      ? dateFormatter.format(new Date(item.pubDate))
-      : ''
-  }
+    return response
+		
+    },
+    async scheduled(event,env, ctx) {
+	  		 ctx.waitUntil(await handleScheduled(env,ctx));
+	},
 
-  return template({
-    items: items,
-    sources: sources,
-    page_title: TITLE,
-    page_description: DESCRIPTION,
-  })
-}
+};

@@ -112,7 +112,7 @@ async function handleScheduled(env,ctx) {
   content.sort((a, b) => {
     let aDate = new Date(a.isoDate)
     let bDate = new Date(b.isoDate)
-    if (aDate < bDate) {
+    if (aDate > bDate) {
       return 1
     } else if (aDate === bDate) {
       return 0

@@ -159,7 +159,9 @@ async function fetchAndHydrate(feed) {
   let content = await resp.text()
   //let contentFeed = await parser.parseString(content)
   let contentFeed = await parser.parse(content)
-  console.log(JSON.stringify(contentFeed.rss.channel.item,null,2))
+  
+  console.log(JSON.stringify(contentFeed,null,2))
+  //console.log(JSON.stringify(contentFeed.rss.channel.item,null,2))
 
   for (let item of contentFeed.rss.channel.item) {
     item.source_title = contentFeed.title

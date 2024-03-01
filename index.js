@@ -56,7 +56,7 @@ function createFeed(items,env) {
  * @param {Array} items parsed by rss-parser
  * @returns String with HTML page containing the parsed contents
  */
-function createHTML(items, sources) {
+function createHTML(items, sources,env) {
   console.log(`[createHTML] building the HTML document`)
   let template = Handlebars.templates['default']
   let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
@@ -126,7 +126,7 @@ async function handleScheduled(env,ctx) {
 
   // Generate feed
   let feed = createFeed(content,env)
-  let html = createHTML(content, sources)
+  let html = createHTML(content, sources,env)
   // Store
   console.log(feed.rss2())
   

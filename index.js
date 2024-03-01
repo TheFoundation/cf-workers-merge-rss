@@ -130,7 +130,7 @@ async function handleScheduled(env,ctx) {
   }
 
   // Generate feed
-  let feed = createFeed(content,env)
+  let feed = createFeed(content.reverse(),env)
   let html = createHTML(content, sources,env)
   // Store
   //console.log(feed.rss2())

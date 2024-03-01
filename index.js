@@ -62,7 +62,7 @@ function createHTML(items, sources,env) {
   let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
   
   for (let item of items) {
-    let shortdescription = striptags(item.content).substring(0, 250)
+    let shortdescription = striptags(item.description).substring(0, 250)
     item.description = shortdescription ? shortdescription + ' [...]' : ''
     item.formattedDate = item.pubDate
       ? dateFormatter.format(new Date(item.pubDate))
@@ -183,9 +183,7 @@ export default {
     const cacheMaxAge = env.CACHE_MAX_AGE || 1800
     let response = await cache.match(cacheKey)
     if (response) return response
-    
     const path = new URL(request.url).pathname
-    
     if (path === '/') {
       let content = await env.RSS_STORE.get('html')
       response = new Response(content, {

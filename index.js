@@ -160,12 +160,12 @@ async function fetchAndHydrate(feed) {
   //let contentFeed = await parser.parseString(content)
   let contentFeed = await parser.parse(content)
   
-  console.log(JSON.stringify(contentFeed,null,2))
+  //console.log(JSON.stringify(contentFeed,null,2))
   //console.log(JSON.stringify(contentFeed.rss.channel.item,null,2))
 
   for (let item of contentFeed.rss.channel.item) {
-    item.source_title = contentFeed.title
-    item.source_link = contentFeed.link
+    item.source_title = contentFeed.rss.channel.title
+    item.source_link = contentFeed.rss.channel.link
     if ('content:encoded' in item) {
       item.content = item['content:encoded']
     }

@@ -75,7 +75,7 @@ function createHTML(items, sources,env) {
   }
   
   return template({
-    items: items,
+    items: items.reverse(),
     sources: sources,
     page_title: env.TITLE|| "MERGED FEED FOR "+env.FEEDS,
     page_description: env.DESCRIPTION|| "No description provided",

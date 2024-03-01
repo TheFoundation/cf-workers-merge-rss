@@ -62,7 +62,7 @@ function createHTML(items, sources,env) {
   let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
   
   for (let item of items) {
-    let shortdescription = striptags(item.content||item.description).substring(0, 250)
+    let shortdescription = striptags(item.content||item.description).substring(0, 666)
     //console.log(shortdescription)
     item.content =  shortdescription ?  shortdescription + ' [...]' : ''
     item.formattedDate = item.pubDate

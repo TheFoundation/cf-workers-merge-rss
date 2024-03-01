@@ -63,7 +63,7 @@ function createHTML(items, sources,env) {
   
   for (let item of items) {
     let shortdescription = striptags(item.content||item.description).substring(0, 250)
-    console.log(shortdescription)
+    //console.log(shortdescription)
     item.description = shortdescription ? shortdescription + ' [...]' : ''
     item.formattedDate = item.pubDate
       ? dateFormatter.format(new Date(item.pubDate))

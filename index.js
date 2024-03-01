@@ -1,7 +1,7 @@
 //import Parser from 'rss-parser'
 //import { Feed } from 'feed'
-//import Handlebars from 'handlebars/runtime'
-//import template from './templates/default.precompiled'
+import Handlebars from 'handlebars/runtime'
+import template from './templates/default.precompiled'
 //import * as striptags from 'striptags'
 //
 ///**
@@ -56,25 +56,25 @@ function createFeed(items,env) {
  * @returns String with HTML page containing the parsed contents
  */
 function createHTML(items, sources) {
-  //console.log(`[createHTML] building the HTML document`)
-  //let template = Handlebars.templates['default']
-  //let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
-  //
-  //for (let item of items) {
-  //  let shortdescription = striptags(item.content).substring(0, 250)
-  //  item.description = shortdescription ? shortdescription + ' [...]' : ''
-  //  item.formattedDate = item.pubDate
-  //    ? dateFormatter.format(new Date(item.pubDate))
-  //    : ''
-  //}
-  //
-  //return template({
-  //  items: items,
-  //  sources: sources,
-  //  page_title: TITLE,
-  //  page_description: DESCRIPTION,
-  //})
-  return "not implemented"
+  console.log(`[createHTML] building the HTML document`)
+  let template = Handlebars.templates['default']
+  let dateFormatter = new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC' })
+  
+  for (let item of items) {
+    let shortdescription = striptags(item.content).substring(0, 250)
+    item.description = shortdescription ? shortdescription + ' [...]' : ''
+    item.formattedDate = item.pubDate
+      ? dateFormatter.format(new Date(item.pubDate))
+      : ''
+  }
+  
+  return template({
+    items: items,
+    sources: sources,
+    page_title: TITLE,
+    page_description: DESCRIPTION,
+  })
+  //return "not implemented"
 }
 
 /**

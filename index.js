@@ -128,12 +128,13 @@ async function handleScheduled(env,ctx) {
   let feed = createFeed(content,env)
   let html = createHTML(content, sources,env)
   // Store
-  console.log(feed.rss2())
+  //console.log(feed.rss2())
+  //console.log(html)
   
   ctx.waitUntil(await env.RSS_STORE.put('rss', await feed.rss2()));
 
   //await env.RSS_STORE.put('atom', feed.atom1())
-  ctx.waitUntil(await env.RSS_STORE.put('html', html));
+  ctx.waitUntil(await env.RSS_STORE.put('html',await  html));
 
   
   console.log("cron done")
